@@ -6,7 +6,7 @@
 /*   By: jye <jye@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/10/23 16:22:29 by jye               #+#    #+#             */
-/*   Updated: 2017/10/29 21:57:26 by jye              ###   ########.fr       */
+/*   Updated: 2017/10/30 22:26:06 by jye              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,15 +20,46 @@
 #include <stdio.h>
 #include <sys/select.h>
 #include <sys/ioctl.h>
+#include <stdlib.h>
+#include <string.h>
 
 struct termios g_otermios;
-t_column	   **column;
-t_column       *cur_col;
-int			   dsize;
+t_column	   *column;
 t_datainfo	   *datainfo;
-t_datainfo     *cur_data;
-t_xy           termsize;
-t_xy           cursor;
+char		   *caps[CAPNO];
+int			   maxinfo;
+int			   maxcolumn;
+
+t_rc           termsize;
+t_rc           cursor;
+
+void	ft_qsort(void **ptr_b, ssize_t size, int (*cmp)())
+{
+	void		*tmp_p;
+	ssize_t		lo;
+	ssize_t		hi;
+
+	if ((hi = size - 2) < 0)
+		return ;
+	lo = 0;
+	while (0xdeadc0de)
+	{
+		while (lo < size - 1 && cmp(ptr_b[lo], ptr_b[size - 1]) < 0)
+			lo++;
+		while (lo < hi && cmp(ptr_b[hi], ptr_b[size - 1]) > 0)
+			hi--;
+		if (lo >= hi)
+			break ;
+		tmp_p = ptr_b[lo];
+		ptr_b[lo] = ptr_b[hi];
+		ptr_b[hi] = tmp_p;
+	}
+	tmp_p = ptr_b[lo];
+	ptr_b[lo] = ptr_b[size - 1];
+	ptr_b[size - 1] = tmp_p;
+	ft_qsort(ptr_b, lo, cmp);
+	ft_qsort(ptr_b + lo + 1, size - lo - 1, cmp);
+}
 
 int		update_termsize(void)
 {
@@ -36,8 +67,8 @@ int		update_termsize(void)
 
 	if (ioctl(STDIN_FILENO, TIOCGWINSZ, &w))
 		return (1);
-	termsize.x = w.ws_col;
-	termsize.y = w.ws_row;
+	termsize.col = w.ws_col;
+	termsize.row = w.ws_row;
 	return (0);
 }
 
@@ -74,7 +105,7 @@ int		init_select_mode(void)
 	}
 	if (test_termcaps())
 	{
-		dprintf(2, "%s: one of the definition is missing\n", PROGRAM_NAME);
+		dprintf(2, "%s: one of the capability is missing\n", PROGRAM_NAME);
 		return (1);
 	}
 	return (0);
@@ -85,8 +116,6 @@ int		init_datainfo(int ac, char **av)
 	tputs(tgetstr("ti"), 0, putchar_);
 	dsize = ac - 1;
 }
-
-// start ti end te save/restore term state
 
 int		restore_terminal(void)
 {
@@ -111,42 +140,114 @@ void	key_event(uint64_t k)
 		;
 }
 
+void	init_termcap(void)
+{
+	caps[CM] = tgetstr("cm", 0); // placing relative screen cursor
+	caps[TI] = tgetstr("ti", 0); // save term state
+	caps[TE] = tgetstr("te", 0); // restore term state
+	caps[NC] = tgetstr("NC", 0); // customize line// man terminfo NC
+}
+
 int		test_termcaps(void)
 {
 	int	r;
 
 	r = 0;
-	r |= !tgetstr("ti", 0); // save termstate
-	r |= !tgetstr("te", 0); // restore termstate
-	r |= !tgetstr("do", 0); // down line
-	r |= !tgetstr("up", 0); // up line 
-	r |= !tgetstr("le", 0); // left line
-	r |= !tgetstr("nd", 0); // right line
-	r |= !tgetstr("NC", 0); // underline bold etc...
-	return (r);
+	init_termcap();
+	while (r < CAPNO)
+		if (!caps[r++])
+			return (1);
+	return (0);
 }
 
-void	init_sigaction(void)
-{
-	struct sigaction s;
+/* void	init_sigaction(void) */
+/* { */
+/* 	struct sigaction s; */
 
-	sigfillset(&s.sa_mask);
-	s.sa_flags = SA_RESTART;
-	s.sa_handler
+/* 	sigfillset(&s.sa_mask); */
+/* 	s.sa_flags = SA_RESTART; */
+/* 	s.sa_handler */
+/* } */
+
+int		init_datainfo(int ac, char **av)
+{
+	t_datainfo	*buf;
+	int			i;
+	char		*s;
+
+	if (ac == 1)
+		return (1);
+	if ((buf = (t_datainfo *)malloc(sizeof(*buf), ac - 1)) == (t_datainfo *)0)
+		return (1);
+	i = 0;
+	dsize = ac - 1;
+	while (i < dsize)
+	{
+		s = av[i + 1];
+		buf[i].s = s;
+		buf[i].len = strlen(s);
+		buf[i].state = SL_ALIVE;
+		i++;
+	}
+	datainfo = buf;
+	return (0);
+}
+
+t_infodata	**init_column_infodata(ssize_t maxno)
+{
+	t_infodata	**buf;
+	int			i;
+
+	if ((buf = (t_infodata **)malloc(sizeof(*buf) * maxno)) == (t_infodata **)0)
+	{
+		exit(1);
+	}
+	while (i < maxno)
+		buf[i++] = (t_infodata *)0;
+	return (buf);
+}
+
+int		init_column(void)
+{
+	int		i;
+	int		maxno;
+
+	if ((column = malloc(sizeof(*column) * dsize)) == 0)
+		return (1);
+	i = 0;
+	while (i < dsize)
+	{
+		maxno = (dsize / (i + 1)) + 1;
+		column[i].min_width = 0;
+		column[i].maxno = maxno;
+		column[i].infosize = 0;
+		if ((column[i].info = init_column_infodata(maxno)) == 0)
+		{
+			dprintf(STDERR_FILENO, "%s: cannot allocate enough memory for select mode, aborting now\n", PROGRAM_NAME);
+			return (1);
+		}
+	}
+	return (0);
+}
+
+int		set_column_infodata(void)
+{
+	
 }
 
 int		main(int ac, char **av)
 {
 	uint64_t			k;
 
+	ft_qsort(av + 1, ac - 1, strcmp);
 	if (init_non_canon())
 		return (1);
-	if (init_select_mode() || init_datainfo())
+	if (init_select_mode() || init_datainfo(ac, av) || init_column())
 	{
 		restore_terminal();
 		return (1);
 	}
-	init_sigaction();
+	/* init_sigaction(); */
 	while (0xdeadbeef)
 	{
 		k = 0;
@@ -155,6 +256,6 @@ int		main(int ac, char **av)
 		refresh_column();
 		refresh_screen();
 	}
-	tputs(tgetstr("te"), 0, putchar_);
+	tputs(caps[TE], 0, putchar_);
 	return (0);
 }
