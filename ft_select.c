@@ -6,12 +6,11 @@
 /*   By: jye <jye@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/10/23 16:22:29 by jye               #+#    #+#             */
-/*   Updated: 2017/10/30 22:26:06 by jye              ###   ########.fr       */
+/*   Updated: 2017/11/14 00:18:14 by jye              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ft_select.h"
-#include "lst.h"
 
 #include <termios.h>
 #include <term.h>
@@ -23,15 +22,20 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct termios g_otermios;
-t_column	   *column;
-t_datainfo	   *datainfo;
-char		   *caps[CAPNO];
-int			   maxinfo;
-int			   maxcolumn;
+struct termios	g_otermios;
+t_column		*column;
+t_datainfo		*datainfo;
+char		 	*caps[CAPNO];
+
+int				cur_col;
+int				cur_row;
+
+int				min_width;
+int				winhelp;
+int				maxinfo;
+int				maxcolumn;
 
 t_rc           termsize;
-t_rc           cursor;
 
 void	ft_qsort(void **ptr_b, ssize_t size, int (*cmp)())
 {
@@ -111,14 +115,9 @@ int		init_select_mode(void)
 	return (0);
 }
 
-int		init_datainfo(int ac, char **av)
-{
-	tputs(tgetstr("ti"), 0, putchar_);
-	dsize = ac - 1;
-}
-
 int		restore_terminal(void)
 {
+	tputs(caps[TE], 0, putchar_);
 	return (tcsetattr(STDIN_FILENO, &g_otermios, TCSANOW));
 }
 
@@ -177,15 +176,17 @@ int		init_datainfo(int ac, char **av)
 
 	if (ac == 1)
 		return (1);
-	if ((buf = (t_datainfo *)malloc(sizeof(*buf), ac - 1)) == (t_datainfo *)0)
+	if ((buf = (t_datainfo *)malloc(sizeof(*buf) * (ac - 1))) == (t_datainfo *)0)
 		return (1);
 	i = 0;
-	dsize = ac - 1;
-	while (i < dsize)
+	maxinfo = ac - 1;
+	while (i < maxinfo)
 	{
 		s = av[i + 1];
 		buf[i].s = s;
 		buf[i].len = strlen(s);
+		if (min_width < buf[i].len)
+			min_width = buf[i].len;
 		buf[i].state = SL_ALIVE;
 		i++;
 	}
@@ -199,9 +200,7 @@ t_infodata	**init_column_infodata(ssize_t maxno)
 	int			i;
 
 	if ((buf = (t_infodata **)malloc(sizeof(*buf) * maxno)) == (t_infodata **)0)
-	{
-		exit(1);
-	}
+		return (1);
 	while (i < maxno)
 		buf[i++] = (t_infodata *)0;
 	return (buf);
@@ -212,27 +211,77 @@ int		init_column(void)
 	int		i;
 	int		maxno;
 
-	if ((column = malloc(sizeof(*column) * dsize)) == 0)
+	if ((column = malloc(sizeof(*column) * maxinfo)) == 0)
 		return (1);
 	i = 0;
-	while (i < dsize)
+	while (i < maxinfo)
 	{
-		maxno = (dsize / (i + 1)) + 1;
-		column[i].min_width = 0;
+		maxno = (maxinfo / (i + 1));
 		column[i].maxno = maxno;
-		column[i].infosize = 0;
 		if ((column[i].info = init_column_infodata(maxno)) == 0)
 		{
 			dprintf(STDERR_FILENO, "%s: cannot allocate enough memory for select mode, aborting now\n", PROGRAM_NAME);
 			return (1);
 		}
 	}
+	set_help_windows();
+	set_column_infodata();
 	return (0);
 }
 
-int		set_column_infodata(void)
+void	can_set_winhelp(void)
 {
-	
+	return (termsize.col < MIN_COL_WINHELP && termsize.row < MIN_ROW_WINHELP);
+}
+
+void	set_column_infodata(void)
+{
+	int		i;
+	int		col;
+	int		info;
+	int		curmax;
+
+	curmax = (maxinfo / termsize.col) - (winhelp * MAX_ROW_WINHELP);
+	col = 0;
+	info = 0;
+	min_width = 0;
+	while (i < maxinfo)
+	{
+		column[col].info_size = curmax;
+		column[col].info[info] = datainfo + i;
+		if (info == curmax)
+		{
+			min_width = 0;
+			column[col].min_width = min_width;
+			info = 0;
+			col++;
+		}
+ 	}
+	column[col].min_width = min_width;
+}
+
+void	select_output(int col)
+{
+	t_infodata	*t;
+	int			max;
+	int			i;
+	int			row;
+
+	max = column[col].info_size;
+	i = 0;
+	row = winhelp * MIN_ROW_WINHELP;
+	TSETCURSOR(row, 0);
+	while (i < max)
+	{
+		t = column[col].info[i];
+		ft_dprintf(2, "%s%s%s\n", tputs(tparm(caps[NC], A_UNDERLINE), 0, putchar_), t->s, NONE);
+		i++;
+	}
+}
+
+void	select_refresh(int col, int row)
+{
+
 }
 
 int		main(int ac, char **av)
@@ -247,15 +296,16 @@ int		main(int ac, char **av)
 		restore_terminal();
 		return (1);
 	}
-	/* init_sigaction(); */
-	while (0xdeadbeef)
-	{
-		k = 0;
-		read(STDIN_FILENO, &k, sizeof(k));
-		key_event(k);
-		refresh_column();
-		refresh_screen();
-	}
-	tputs(caps[TE], 0, putchar_);
+	tputs(caps[TI], 0, putchar_);
+	select_output(0);
+	/* while (0xdeadbeef) */
+	/* { */
+	/* 	k = 0; */
+	/* 	read(STDIN_FILENO, &k, sizeof(k)); */
+	/* 	key_event(k); */
+	/* 	refresh_column(); */
+	/* 	refresh_screen(); */
+	/* } */
+	restore_terminal();
 	return (0);
 }
