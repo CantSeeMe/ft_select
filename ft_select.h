@@ -6,7 +6,7 @@
 /*   By: jye <jye@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/10/23 16:22:10 by jye               #+#    #+#             */
-/*   Updated: 2017/11/14 00:19:11 by jye              ###   ########.fr       */
+/*   Updated: 2017/11/15 05:51:53 by jye              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,12 +35,17 @@
 # define MIN_COL_WINHELP	26
 # define MIN_ROW_WINHELP	4
 
-# define CAPNO		4
+# define CAPNO		9
 
 # define CM		0
-# define NC		1
-# define TI		2
-# define TE		3
+# define TI		1
+# define TE		2
+# define ME		3 // reset
+# define MB		4 // blink
+# define MD		5 // double bright
+# define MR		6 // reverse
+# define US		7 // underline
+# define SO		8 // standout
 
 # define NONE	""
 
@@ -57,19 +62,20 @@
 
 # define TSETCURSOR(row, col) tputs(tgoto(caps[CM], (row), (col)), 0, putchar_)
 
-typedef struct	s_column
-{
-	int			maxno;
-	int			info_size;
-	t_datainfo	**info;
-}				t_column;
-
 typedef struct	s_datainfo
 {
 	int			state;
 	int			len;
 	char		*s;
 }				t_datainfo;
+
+typedef struct	s_column
+{
+	int			maxno;
+	int			min_width;
+	int			info_size;
+	t_datainfo	**info;
+}				t_column;
 
 typedef struct	s_rc
 {

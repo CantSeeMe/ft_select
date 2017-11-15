@@ -6,7 +6,7 @@
 /*   By: jye <jye@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/10/23 16:22:29 by jye               #+#    #+#             */
-/*   Updated: 2017/11/14 00:18:14 by jye              ###   ########.fr       */
+/*   Updated: 2017/11/15 05:52:25 by jye              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,10 +30,9 @@ char		 	*caps[CAPNO];
 int				cur_col;
 int				cur_row;
 
-int				min_width;
 int				winhelp;
 int				maxinfo;
-int				maxcolumn;
+int				ncolumn;
 
 t_rc           termsize;
 
@@ -87,7 +86,7 @@ int		init_non_canon(void)
 	}
 	g_otermios = termios;
 	termios.c_lflag &= ~(ECHO | ECHONL | ECHOK | ICANON);
-	if (tcsetattr(STDIN_FILENO, &termios, TCSANOW))
+	if (tcsetattr(STDIN_FILENO, TCSANOW, &termios))
 	{
 		dprintf(2, "%s: could not set termios on stdin\n", PROGRAM_NAME);
 		return (1);
@@ -95,9 +94,39 @@ int		init_non_canon(void)
 	return (0);
 }
 
+static char *termcapid[CAPNO] = {"cm", "ti", "te", "me", "mb", "md" ,
+								  "mr", "us", "so"};
+
+void	init_termcap(void)
+{
+	int		i;
+
+	i = 0;
+	while (i < CAPNO)
+	{
+		caps[i] = tgetstr(termcapid[i], 0);
+		i++;
+	}
+}
+
+int		test_termcaps(void)
+{
+	int	r;
+
+	r = 0;
+	init_termcap();
+	while (r < CAPNO)
+	{
+		dprintf(1, "%d\n", r);
+		if (!caps[r++])
+			return (1);
+	}
+	return (0);
+}
+
 int		init_select_mode(void)
 {
-	if (tgetent(getenv("TERM")) > 0)
+	if (tgetent(getenv("TERM"), 0) <= 0)
 	{
 		dprintf(2, "%s: could not find terminal definition\n", PROGRAM_NAME);
 		return (1);
@@ -118,7 +147,7 @@ int		init_select_mode(void)
 int		restore_terminal(void)
 {
 	tputs(caps[TE], 0, putchar_);
-	return (tcsetattr(STDIN_FILENO, &g_otermios, TCSANOW));
+	return (tcsetattr(STDIN_FILENO, TCSANOW, &g_otermios));
 }
 
 void	key_event(uint64_t k)
@@ -137,26 +166,6 @@ void	key_event(uint64_t k)
 		;
 	else if (k == KEY_DELETE)
 		;
-}
-
-void	init_termcap(void)
-{
-	caps[CM] = tgetstr("cm", 0); // placing relative screen cursor
-	caps[TI] = tgetstr("ti", 0); // save term state
-	caps[TE] = tgetstr("te", 0); // restore term state
-	caps[NC] = tgetstr("NC", 0); // customize line// man terminfo NC
-}
-
-int		test_termcaps(void)
-{
-	int	r;
-
-	r = 0;
-	init_termcap();
-	while (r < CAPNO)
-		if (!caps[r++])
-			return (1);
-	return (0);
 }
 
 /* void	init_sigaction(void) */
@@ -185,8 +194,6 @@ int		init_datainfo(int ac, char **av)
 		s = av[i + 1];
 		buf[i].s = s;
 		buf[i].len = strlen(s);
-		if (min_width < buf[i].len)
-			min_width = buf[i].len;
 		buf[i].state = SL_ALIVE;
 		i++;
 	}
@@ -194,16 +201,56 @@ int		init_datainfo(int ac, char **av)
 	return (0);
 }
 
-t_infodata	**init_column_infodata(ssize_t maxno)
+t_datainfo	**init_column_infodata(ssize_t maxno)
 {
-	t_infodata	**buf;
+	t_datainfo	**buf;
 	int			i;
 
-	if ((buf = (t_infodata **)malloc(sizeof(*buf) * maxno)) == (t_infodata **)0)
-		return (1);
+	if ((buf = (t_datainfo **)malloc(sizeof(*buf) * maxno)) == (t_datainfo **)0)
+		return ((t_datainfo **)0);
+	i = 0;
 	while (i < maxno)
-		buf[i++] = (t_infodata *)0;
+		buf[i++] = (t_datainfo *)0;
 	return (buf);
+}
+
+void	reset_column_infodata(void)
+{
+	int		i;
+
+	i = 0;
+	while (i < ncolumn)
+		column[i++].info_size = 0;
+	ncolumn = 0;
+}
+
+void	set_column_infodata(void)
+{
+	int		i;
+	int		info;
+	int		curmax;
+	int		min_width;
+
+	curmax = (maxinfo / termsize.col) - (winhelp * MIN_ROW_WINHELP);
+	i = 0;
+	min_width = 0;
+	info = 0;
+	while (i < maxinfo)
+	{
+		column[ncolumn].info_size++;
+		column[ncolumn].info[info++] = datainfo + i;
+		if (min_width < datainfo[i].len)
+			min_width = datainfo[i].len;
+		if (info == curmax)
+		{
+			column[ncolumn++].min_width = min_width;
+			min_width = 0;
+			info = 0;
+		}
+		i++;
+ 	}
+	if (info != curmax)
+		column[ncolumn].min_width = min_width;
 }
 
 int		init_column(void)
@@ -211,58 +258,34 @@ int		init_column(void)
 	int		i;
 	int		maxno;
 
-	if ((column = malloc(sizeof(*column) * maxinfo)) == 0)
+	if ((column = (t_column *)malloc(sizeof(*column) * maxinfo)) == (t_column *)0)
 		return (1);
 	i = 0;
 	while (i < maxinfo)
 	{
 		maxno = (maxinfo / (i + 1));
 		column[i].maxno = maxno;
+		column[i].info_size = 0;
 		if ((column[i].info = init_column_infodata(maxno)) == 0)
 		{
 			dprintf(STDERR_FILENO, "%s: cannot allocate enough memory for select mode, aborting now\n", PROGRAM_NAME);
 			return (1);
 		}
+		i++;
 	}
-	set_help_windows();
+//	set_help_windows();
 	set_column_infodata();
 	return (0);
 }
 
-void	can_set_winhelp(void)
+int		can_set_winhelp(void)
 {
 	return (termsize.col < MIN_COL_WINHELP && termsize.row < MIN_ROW_WINHELP);
 }
 
-void	set_column_infodata(void)
-{
-	int		i;
-	int		col;
-	int		info;
-	int		curmax;
-
-	curmax = (maxinfo / termsize.col) - (winhelp * MAX_ROW_WINHELP);
-	col = 0;
-	info = 0;
-	min_width = 0;
-	while (i < maxinfo)
-	{
-		column[col].info_size = curmax;
-		column[col].info[info] = datainfo + i;
-		if (info == curmax)
-		{
-			min_width = 0;
-			column[col].min_width = min_width;
-			info = 0;
-			col++;
-		}
- 	}
-	column[col].min_width = min_width;
-}
-
 void	select_output(int col)
 {
-	t_infodata	*t;
+	t_datainfo	*t;
 	int			max;
 	int			i;
 	int			row;
@@ -274,21 +297,21 @@ void	select_output(int col)
 	while (i < max)
 	{
 		t = column[col].info[i];
-		ft_dprintf(2, "%s%s%s\n", tputs(tparm(caps[NC], A_UNDERLINE), 0, putchar_), t->s, NONE);
+		dprintf(2, "%s%s%s\n", caps[US], t->s, caps[ME]);
 		i++;
 	}
 }
 
 void	select_refresh(int col, int row)
 {
-
+	
 }
 
 int		main(int ac, char **av)
 {
 	uint64_t			k;
 
-	ft_qsort(av + 1, ac - 1, strcmp);
+	ft_qsort((void **)(av + 1), ac - 1, strcmp);
 	if (init_non_canon())
 		return (1);
 	if (init_select_mode() || init_datainfo(ac, av) || init_column())
@@ -306,6 +329,7 @@ int		main(int ac, char **av)
 	/* 	refresh_column(); */
 	/* 	refresh_screen(); */
 	/* } */
+	sleep(2);
 	restore_terminal();
 	return (0);
 }
