@@ -6,7 +6,7 @@
 /*   By: jye <jye@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/10/23 16:22:10 by jye               #+#    #+#             */
-/*   Updated: 2017/11/15 05:51:53 by jye              ###   ########.fr       */
+/*   Updated: 2017/11/16 11:44:45 by jye              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,22 +20,28 @@
 
 # define MIN_WIDTH	2
 
+# undef KEY_ENTER
+# undef KEY_BACKSPACE
+
 # define KEY_ARROW_UP		0x415b1bL
 # define KEY_ARROW_DOWN		0x425b1bL
 # define KEY_ARROW_RIGHT	0x435b1bL
 # define KEY_ARROW_LEFT		0x445b1bL
 # define KEY_SPACEBAR		0x20L
 # define KEY_BACKSPACE		0x7fL
+# define KEY_ENTER			0x0aL
 # define KEY_DELETE			0x7e335b1bL
 
+# define SL_ADD			00
+# define SL_REMOVE		01
 # define SL_CURSOR		0x1
 # define SL_SELECTED	0x2
-# define SL_ALIVE		0x3
+# define SL_ALIVE		0x4
 
 # define MIN_COL_WINHELP	26
 # define MIN_ROW_WINHELP	4
 
-# define CAPNO		9
+# define CAPNO		12
 
 # define CM		0
 # define TI		1
@@ -46,21 +52,13 @@
 # define MR		6 // reverse
 # define US		7 // underline
 # define SO		8 // standout
+# define VI		9 // invisible cursor
+# define VS		10 // visible cursorx
+# define CD		11 // clear screen
 
 # define NONE	""
 
-# define A_NORMAL		0x000
-# define A_STANDOUT		0x001
-# define A_UNDERLINE	0x002
-# define A_REVERSE		0x004
-# define A_BLINK		0x008
-# define A_DIM			0x010
-# define A_BOLD			0x020
-# define A_INVIS		0x040
-# define A_PROTECT		0x080
-# define A_ALTCHARSET	0x100
-
-# define TSETCURSOR(row, col) tputs(tgoto(caps[CM], (row), (col)), 0, putchar_)
+# define TSETCURSOR(row, col) dprintf(2, "%s", tgoto(caps[CM], (col), (row)));
 
 typedef struct	s_datainfo
 {
@@ -83,9 +81,32 @@ typedef struct	s_rc
 	int		row:16;
 }				t_rc;
 
-static inline int putchar_(int c)
-{
-	return (write(STDERR_FILENO, &c, 1));
-}
-	
+extern struct termios	g_otermios;
+extern t_column			*column;
+extern t_datainfo		*datainfo;
+extern char		 		*caps[CAPNO];
+
+extern int				cur_col;
+extern int				cur_row;
+
+extern int				winhelp;
+extern int				maxinfo;
+extern int				eleminfo;
+extern int				selected;
+extern int				ncolumn;
+
+extern t_rc				termsize;
+
+void	select_move_up(void);
+void	select_move_right(void);
+void	select_move_left(void);
+void	select_move_down(void);
+void	select_current(void);
+void	delete_current(void);
+void	done(void);
+
+void	select_refresh(t_datainfo *info, int options, int state);
+void	set_column_infodata(void);
+void	select_output(t_column *col);
+
 #endif

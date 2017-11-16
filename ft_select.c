@@ -6,21 +6,20 @@
 /*   By: jye <jye@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/10/23 16:22:29 by jye               #+#    #+#             */
-/*   Updated: 2017/11/15 05:52:25 by jye              ###   ########.fr       */
+/*   Updated: 2017/11/16 11:44:27 by jye              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-
-#include "ft_select.h"
 
 #include <termios.h>
 #include <term.h>
 #include <curses.h>
 #include <unistd.h>
 #include <stdio.h>
-#include <sys/select.h>
 #include <sys/ioctl.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "ft_select.h"
 
 struct termios	g_otermios;
 t_column		*column;
@@ -32,9 +31,11 @@ int				cur_row;
 
 int				winhelp;
 int				maxinfo;
+int				eleminfo;
 int				ncolumn;
+int				selected;
 
-t_rc           termsize;
+t_rc			termsize;
 
 void	ft_qsort(void **ptr_b, ssize_t size, int (*cmp)())
 {
@@ -94,8 +95,8 @@ int		init_non_canon(void)
 	return (0);
 }
 
-static char *termcapid[CAPNO] = {"cm", "ti", "te", "me", "mb", "md" ,
-								  "mr", "us", "so"};
+static char *termcapid[CAPNO] = {"cm", "ti", "te", "me", "mb", "md",
+								 "mr", "us", "so", "vi", "vs", "cd"};
 
 void	init_termcap(void)
 {
@@ -117,7 +118,6 @@ int		test_termcaps(void)
 	init_termcap();
 	while (r < CAPNO)
 	{
-		dprintf(1, "%d\n", r);
 		if (!caps[r++])
 			return (1);
 	}
@@ -146,26 +146,8 @@ int		init_select_mode(void)
 
 int		restore_terminal(void)
 {
-	tputs(caps[TE], 0, putchar_);
+	dprintf(2, "%s", caps[TE]);
 	return (tcsetattr(STDIN_FILENO, TCSANOW, &g_otermios));
-}
-
-void	key_event(uint64_t k)
-{
-	if (k == KEY_ARROW_UP)
-		;
-	else if (k == KEY_ARROW_DOWN)
-		;
-	else if (k == KEY_ARROW_LEFT)
-		;
-	else if (k == KEY_ARROW_RIGHT)
-		;
-	else if (k == KEY_SPACEBAR)
-		;
-	else if (k == KEY_BACKSPACE)
-		;
-	else if (k == KEY_DELETE)
-		;
 }
 
 /* void	init_sigaction(void) */
@@ -189,6 +171,7 @@ int		init_datainfo(int ac, char **av)
 		return (1);
 	i = 0;
 	maxinfo = ac - 1;
+	eleminfo = maxinfo;
 	while (i < maxinfo)
 	{
 		s = av[i + 1];
@@ -214,16 +197,6 @@ t_datainfo	**init_column_infodata(ssize_t maxno)
 	return (buf);
 }
 
-void	reset_column_infodata(void)
-{
-	int		i;
-
-	i = 0;
-	while (i < ncolumn)
-		column[i++].info_size = 0;
-	ncolumn = 0;
-}
-
 void	set_column_infodata(void)
 {
 	int		i;
@@ -235,22 +208,30 @@ void	set_column_infodata(void)
 	i = 0;
 	min_width = 0;
 	info = 0;
+	ncolumn = 0;
 	while (i < maxinfo)
 	{
-		column[ncolumn].info_size++;
-		column[ncolumn].info[info++] = datainfo + i;
-		if (min_width < datainfo[i].len)
-			min_width = datainfo[i].len;
-		if (info == curmax)
+		if ((datainfo[i].state & SL_ALIVE))
 		{
-			column[ncolumn++].min_width = min_width;
-			min_width = 0;
-			info = 0;
+			column[ncolumn].info[info++] = datainfo + i;
+			if (min_width < datainfo[i].len)
+				min_width = datainfo[i].len;
+			if (info == curmax)
+			{
+				column[ncolumn].info_size = info;
+				column[ncolumn++].min_width = min_width;
+				min_width = 0;
+				info = 0;
+			}
 		}
 		i++;
  	}
 	if (info != curmax)
+	{
+		column[ncolumn].info_size = info;
 		column[ncolumn].min_width = min_width;
+		ncolumn += 1;
+	}
 }
 
 int		init_column(void)
@@ -278,33 +259,67 @@ int		init_column(void)
 	return (0);
 }
 
+void	output(t_datainfo *info)
+{
+	int		state;
+
+	state = info->state;
+	if (state & SL_SELECTED)
+		dprintf(2, "%s", caps[MR]);
+	if (state & SL_CURSOR)
+		dprintf(2, "%s", caps[US]);
+	dprintf(2, "%s%s", info->s, caps[ME]);
+}
+
 int		can_set_winhelp(void)
 {
 	return (termsize.col < MIN_COL_WINHELP && termsize.row < MIN_ROW_WINHELP);
 }
 
-void	select_output(int col)
+void	select_output(t_column *col)
 {
-	t_datainfo	*t;
 	int			max;
 	int			i;
 	int			row;
 
-	max = column[col].info_size;
+	max = col->info_size;
 	i = 0;
 	row = winhelp * MIN_ROW_WINHELP;
 	TSETCURSOR(row, 0);
 	while (i < max)
 	{
-		t = column[col].info[i];
-		dprintf(2, "%s%s%s\n", caps[US], t->s, caps[ME]);
-		i++;
+		output(col->info[i++]);
+		dprintf(2, "\n");
 	}
 }
 
-void	select_refresh(int col, int row)
+void	select_refresh(t_datainfo *info, int options, int state)
 {
-	
+	state = options ? ~state & info->state : state | info->state;
+	info->state = state;
+	TSETCURSOR(cur_row + (MIN_ROW_WINHELP * winhelp), 0);
+	output(info);
+}
+
+void	key_event(uint64_t k)
+{
+	dprintf(3, "%lx %lx %lx\n", k, KEY_BACKSPACE, KEY_ENTER);
+	if (k == KEY_BACKSPACE)
+		delete_current();
+	else if (k == KEY_ARROW_UP)
+		select_move_up();
+	else if (k == KEY_ARROW_DOWN)
+		select_move_down();
+	else if (k == KEY_ARROW_LEFT)
+		select_move_left();
+	else if (k == KEY_ARROW_RIGHT)
+		select_move_right();
+	else if (k == KEY_SPACEBAR)
+		select_current();
+	else if (k == KEY_ENTER)
+		done();
+	else if (k == KEY_DELETE)
+		delete_current();
 }
 
 int		main(int ac, char **av)
@@ -314,22 +329,22 @@ int		main(int ac, char **av)
 	ft_qsort((void **)(av + 1), ac - 1, strcmp);
 	if (init_non_canon())
 		return (1);
-	if (init_select_mode() || init_datainfo(ac, av) || init_column())
+	if (ac == 1 || init_select_mode() || init_datainfo(ac, av) || init_column())
 	{
-		restore_terminal();
+		tcsetattr(STDIN_FILENO, TCSANOW, &g_otermios);
 		return (1);
 	}
-	tputs(caps[TI], 0, putchar_);
-	select_output(0);
-	/* while (0xdeadbeef) */
-	/* { */
-	/* 	k = 0; */
-	/* 	read(STDIN_FILENO, &k, sizeof(k)); */
-	/* 	key_event(k); */
-	/* 	refresh_column(); */
-	/* 	refresh_screen(); */
-	/* } */
-	sleep(2);
+	dprintf(2, "%s", caps[TI]);
+	column[0].info[0]->state |= SL_CURSOR;
+	select_output(column + cur_col);
+	dprintf(2, "%s", caps[VI]);
+	while (eleminfo)
+	{
+		k = 0;
+		read(STDIN_FILENO, &k, sizeof(k));
+		key_event(k);
+	}
+	dprintf(2, "%s", caps[VS]);
 	restore_terminal();
 	return (0);
 }
