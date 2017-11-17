@@ -6,7 +6,7 @@
 /*   By: jye <jye@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/11/16 02:07:54 by jye               #+#    #+#             */
-/*   Updated: 2017/11/17 13:08:07 by root             ###   ########.fr       */
+/*   Updated: 2017/11/17 14:44:22 by root             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,7 @@ void	select_move_up(void)
 		cur_col -= 1;
 		cur_col += (cur_col < 0) * ncolumn;
 		cur_row = column[cur_col].info_size - 1;
+		update_page();
 		select_output(column + cur_col);
 	}
 	select_refresh(column[cur_col].info[cur_row], SL_ADD, SL_CURSOR);
@@ -35,6 +36,7 @@ void	select_move_down(void)
 		cur_col += 1;
 		cur_col *= (cur_col < ncolumn);
 		cur_row = 0;
+		update_page();
 		select_output(column + cur_col);
 	}
 	select_refresh(column[cur_col].info[cur_row], SL_ADD, SL_CURSOR);
@@ -46,6 +48,7 @@ void	select_move_left(void)
 
 	select_refresh(column[cur_col--].info[cur_row], SL_REMOVE, SL_CURSOR);
 	cur_col += (cur_col < 0) * ncolumn;
+	update_page();
 	select_output(column + cur_col);
 	infosize = column[cur_col].info_size;
 	cur_row += (cur_row >= infosize) * (infosize - cur_row - 1);
@@ -58,6 +61,7 @@ void	select_move_right(void)
 
 	select_refresh(column[cur_col++].info[cur_row], SL_REMOVE, SL_CURSOR);
 	cur_col *= (cur_col < ncolumn);
+	update_page();
 	select_output(column + cur_col);
 	infosize = column[cur_col].info_size;
 	cur_row += (cur_row >= infosize) * (infosize - cur_row - 1);
@@ -91,6 +95,7 @@ void	delete_current(void)
 	infosize = column[cur_col].info_size;
 	cur_row += (cur_row >= infosize) * (infosize - cur_row - 1);
 	column[cur_col].info[cur_row]->state |= SL_CURSOR;
+	update_page();
 	select_output(column + cur_col);
 	TSETCURSOR(cur_row + (MIN_ROW_WINHELP * winhelp), 0);
 }
@@ -109,7 +114,6 @@ void	print_selected(void)
 	{
 		if (datainfo[i].state & (SL_SELECTED))
 		{
-			dprintf(3, "%s\n", datainfo[i].s);
 			dprintf(1, "%s", datainfo[i].s);
 			if (--selected)
 				dprintf(1, " ");
@@ -117,6 +121,14 @@ void	print_selected(void)
 		i++;
 	}
 	dprintf(1, "\n");
+}
+
+void	update_page(void)
+{
+	if (!winhelp)
+		return ;
+	TSETCURSOR(WINHELP_PAGE_ROW, WINHELP_PAGE_COL);
+	dprintf(2, "%d/%d", cur_col + 1, ncolumn);
 }
 
 #include <signal.h>
@@ -153,11 +165,11 @@ void	select_winch(int sig)
 	update_termsize();
 	TSETCURSOR(0, 0);
 	dprintf(2, "%s", caps[CD]);
-	//
 	current = column[cur_col].info[cur_row];
 	curmax = set_column_infodata();
 	cur_col = (current - datainfo) / curmax;
 	cur_row = (current - datainfo) % curmax;
+	set_help_windows();
 	select_output(column + cur_col);
 	sigprocmask(SIG_UNBLOCK, &set, NULL);
 }

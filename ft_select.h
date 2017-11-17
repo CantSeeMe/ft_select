@@ -6,7 +6,7 @@
 /*   By: jye <jye@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/10/23 16:22:10 by jye               #+#    #+#             */
-/*   Updated: 2017/11/17 11:26:48 by root             ###   ########.fr       */
+/*   Updated: 2017/11/17 14:41:34 by root             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,8 +38,11 @@
 # define SL_SELECTED	0x2
 # define SL_ALIVE		0x4
 
-# define MIN_COL_WINHELP	26
-# define MIN_ROW_WINHELP	4
+# define MIN_COL_WINHELP	65
+# define MIN_ROW_WINHELP	7
+
+# define WINHELP_PAGE_COL	5
+# define WINHELP_PAGE_ROW	35
 
 # define CAPNO		12
 
@@ -58,7 +61,7 @@
 
 # define NONE	""
 
-# define TSETCURSOR(row, col) dprintf(2, "%s", tgoto(caps[CM], (col), (row)));
+# define TSETCURSOR(row, col) dprintf(2, "%s", tgoto(caps[CM], (col), (row)))
 
 typedef struct	s_datainfo
 {
@@ -106,6 +109,8 @@ void	delete_current(void);
 void	print_selected(void);
 void	done(void);
 
+void	update_page(void);
+void	set_help_windows(void);
 int		update_termsize(void);
 void	start_select_mode(void);
 int		end_select_mode(void);

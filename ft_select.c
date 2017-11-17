@@ -6,7 +6,7 @@
 /*   By: jye <jye@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/10/23 16:22:29 by jye               #+#    #+#             */
-/*   Updated: 2017/11/17 13:14:48 by root             ###   ########.fr       */
+/*   Updated: 2017/11/17 15:11:29 by root             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,13 +50,13 @@ void	ft_qsort(void **ptr_b, ssize_t size, int (*cmp)())
 	{
 		while (lo < size - 1 && cmp(ptr_b[lo], ptr_b[size - 1]) < 0)
 			lo++;
-		while (lo < hi && cmp(ptr_b[hi], ptr_b[size - 1]) > 0)
+		while (lo < hi && cmp(ptr_b[hi], ptr_b[size - 1]) >= 0)
 			hi--;
 		if (lo >= hi)
 			break ;
 		tmp_p = ptr_b[lo];
 		ptr_b[lo] = ptr_b[hi];
-		ptr_b[hi] = tmp_p;
+		ptr_b[hi--] = tmp_p;
 	}
 	tmp_p = ptr_b[lo];
 	ptr_b[lo] = ptr_b[size - 1];
@@ -155,6 +155,7 @@ void	start_select_mode(void)
 {
 	dprintf(2, "%s", caps[TI]);
 	column[cur_col].info[cur_row]->state |= SL_CURSOR;
+	set_help_windows();
 	select_output(column + cur_col);
 	dprintf(2, "%s", caps[VI]);
 }
@@ -235,6 +236,25 @@ int		set_column_infodata(void)
 	return (curmax);
 }
 
+int		can_set_winhelp(void)
+{
+	return (termsize.col >= MIN_COL_WINHELP && termsize.row >= MIN_ROW_WINHELP + 3);
+}
+
+void	set_help_windows(void)
+{
+	if (!(winhelp = can_set_winhelp()))
+		return ;
+	dprintf(2, "*****************************************************************\n");
+	dprintf(2, "* backspace / delete: remove current      arrow up   : move up  *\n");
+	dprintf(2, "* space             : select current      arrow down : move down*\n");
+	dprintf(2, "* enter             : print selected      arrow right: next page*\n");
+	dprintf(2, "* q / esc           : quit                arrow left : prev page*\n");
+	dprintf(2, "*                              page:                            *\n");
+	dprintf(2, "*****************************************************************\n");
+	update_page();
+}
+
 int		init_column(void)
 {
 	int		i;
@@ -255,7 +275,6 @@ int		init_column(void)
 		}
 		i++;
 	}
-//	set_help_windows();
 	set_column_infodata();
 	return (0);
 }
@@ -276,11 +295,6 @@ void	output(t_datainfo *info)
 				caps[ME]);
 	else
 		dprintf(2, "%s%s", info->s, caps[ME]);
-}
-
-int		can_set_winhelp(void)
-{
-	return (termsize.col < MIN_COL_WINHELP && termsize.row < MIN_ROW_WINHELP);
 }
 
 void	select_output(t_column *col)
