@@ -6,7 +6,7 @@
 /*   By: jye <jye@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/10/23 16:22:10 by jye               #+#    #+#             */
-/*   Updated: 2017/11/17 14:41:34 by root             ###   ########.fr       */
+/*   Updated: 2017/11/17 15:35:00 by root             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,11 +38,11 @@
 # define SL_SELECTED	0x2
 # define SL_ALIVE		0x4
 
-# define MIN_COL_WINHELP	65
+# define MIN_COL_WINHELP	67
 # define MIN_ROW_WINHELP	7
 
-# define WINHELP_PAGE_COL	5
-# define WINHELP_PAGE_ROW	35
+# define WINHELP_PAGE_ROW	5
+# define WINHELP_PAGE_COL	33
 
 # define CAPNO		12
 

@@ -6,7 +6,7 @@
 /*   By: jye <jye@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/11/16 02:07:54 by jye               #+#    #+#             */
-/*   Updated: 2017/11/17 14:44:22 by root             ###   ########.fr       */
+/*   Updated: 2017/11/17 15:34:21 by root             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -128,7 +128,7 @@ void	update_page(void)
 	if (!winhelp)
 		return ;
 	TSETCURSOR(WINHELP_PAGE_ROW, WINHELP_PAGE_COL);
-	dprintf(2, "%d/%d", cur_col + 1, ncolumn);
+	dprintf(2, "%d / %d        ", cur_col + 1, ncolumn);
 }
 
 #include <signal.h>

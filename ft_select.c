@@ -6,7 +6,7 @@
 /*   By: jye <jye@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/10/23 16:22:29 by jye               #+#    #+#             */
-/*   Updated: 2017/11/17 15:11:29 by root             ###   ########.fr       */
+/*   Updated: 2017/11/17 15:34:58 by root             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -245,13 +245,14 @@ void	set_help_windows(void)
 {
 	if (!(winhelp = can_set_winhelp()))
 		return ;
-	dprintf(2, "*****************************************************************\n");
-	dprintf(2, "* backspace / delete: remove current      arrow up   : move up  *\n");
-	dprintf(2, "* space             : select current      arrow down : move down*\n");
-	dprintf(2, "* enter             : print selected      arrow right: next page*\n");
-	dprintf(2, "* q / esc           : quit                arrow left : prev page*\n");
-	dprintf(2, "*                              page:                            *\n");
-	dprintf(2, "*****************************************************************\n");
+	TSETCURSOR(0, 0);
+	dprintf(2, "******************************************************************\n");
+	dprintf(2, "* backspace / delete: remove current      arrow up   : move up   *\n");
+	dprintf(2, "* space             : select current      arrow down : move down *\n");
+	dprintf(2, "* enter             : print selected      arrow right: next page *\n");
+	dprintf(2, "* q / esc           : quit                arrow left : prev page *\n");
+	dprintf(2, "*                          page:                                 *\n");
+	dprintf(2, "******************************************************************\n");
 	update_page();
 }
 
