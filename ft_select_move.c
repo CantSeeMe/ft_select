@@ -6,7 +6,7 @@
 /*   By: jye <jye@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/11/16 02:07:54 by jye               #+#    #+#             */
-/*   Updated: 2017/11/16 11:40:25 by jye              ###   ########.fr       */
+/*   Updated: 2017/11/17 13:08:07 by root             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@ void	select_move_up(void)
 	select_refresh(column[cur_col].info[cur_row], SL_REMOVE, SL_CURSOR);
 	if (--cur_row < 0)
 	{
+		cur_col -= 1;
 		cur_col += (cur_col < 0) * ncolumn;
 		cur_row = column[cur_col].info_size - 1;
 		select_output(column + cur_col);
@@ -31,6 +32,7 @@ void	select_move_down(void)
 	select_refresh(column[cur_col].info[cur_row], SL_REMOVE, SL_CURSOR);
 	if (++cur_row >= column[cur_col].info_size)
 	{
+		cur_col += 1;
 		cur_col *= (cur_col < ncolumn);
 		cur_row = 0;
 		select_output(column + cur_col);
@@ -95,6 +97,11 @@ void	delete_current(void)
 
 void	done(void)
 {
+	eleminfo = 0;
+}
+
+void	print_selected(void)
+{
 	int		i;
 
 	i = 0;
@@ -102,11 +109,72 @@ void	done(void)
 	{
 		if (datainfo[i].state & (SL_SELECTED))
 		{
+			dprintf(3, "%s\n", datainfo[i].s);
 			dprintf(1, "%s", datainfo[i].s);
 			if (--selected)
 				dprintf(1, " ");
 		}
 		i++;
 	}
-	eleminfo = 0;
+	dprintf(1, "\n");
+}
+
+#include <signal.h>
+#include <stdlib.h>
+
+void	select_suspend(int sig)
+{
+	end_select_mode();
+	kill(0, sig);
+}
+
+void	select_restart(int sig)
+{
+	struct sigaction act;
+
+	(void)sig;
+	sigemptyset(&act.sa_mask);
+	act.sa_flags = SA_RESTART | SA_RESETHAND;
+	act.sa_handler = select_suspend;
+	sigaction(SIGTSTP, &act, NULL);
+	start_select_mode();
+}
+
+void	select_winch(int sig)
+{
+	t_datainfo	*current;
+	int			curmax;
+	sigset_t	set;
+
+	(void)sig;
+	sigemptyset(&set);
+	sigaddset(&set, SIGWINCH);
+	sigprocmask(SIG_BLOCK, &set, NULL);
+	update_termsize();
+	TSETCURSOR(0, 0);
+	dprintf(2, "%s", caps[CD]);
+	//
+	current = column[cur_col].info[cur_row];
+	curmax = set_column_infodata();
+	cur_col = (current - datainfo) / curmax;
+	cur_row = (current - datainfo) % curmax;
+	select_output(column + cur_col);
+	sigprocmask(SIG_UNBLOCK, &set, NULL);
+}
+
+void	signal_handle(void)
+{
+	struct sigaction act;
+
+	sigemptyset(&act.sa_mask);
+	act.sa_handler = select_suspend;
+	act.sa_flags = SA_RESETHAND;
+	sigaction(SIGINT, &act, NULL);
+	act.sa_flags |= SA_RESTART;
+	sigaction(SIGTSTP, &act, NULL);
+	act.sa_flags &= ~SA_RESETHAND;
+	act.sa_handler = select_winch;
+	sigaction(SIGWINCH, &act, NULL);
+	act.sa_handler = select_restart;
+	sigaction(SIGCONT, &act, NULL);
 }

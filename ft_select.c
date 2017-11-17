@@ -6,7 +6,7 @@
 /*   By: jye <jye@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/10/23 16:22:29 by jye               #+#    #+#             */
-/*   Updated: 2017/11/16 11:44:27 by jye              ###   ########.fr       */
+/*   Updated: 2017/11/17 13:14:48 by root             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -144,20 +144,20 @@ int		init_select_mode(void)
 	return (0);
 }
 
-int		restore_terminal(void)
+int		end_select_mode(void)
 {
 	dprintf(2, "%s", caps[TE]);
+	dprintf(2, "%s", caps[VS]);
 	return (tcsetattr(STDIN_FILENO, TCSANOW, &g_otermios));
 }
 
-/* void	init_sigaction(void) */
-/* { */
-/* 	struct sigaction s; */
-
-/* 	sigfillset(&s.sa_mask); */
-/* 	s.sa_flags = SA_RESTART; */
-/* 	s.sa_handler */
-/* } */
+void	start_select_mode(void)
+{
+	dprintf(2, "%s", caps[TI]);
+	column[cur_col].info[cur_row]->state |= SL_CURSOR;
+	select_output(column + cur_col);
+	dprintf(2, "%s", caps[VI]);
+}
 
 int		init_datainfo(int ac, char **av)
 {
@@ -197,14 +197,14 @@ t_datainfo	**init_column_infodata(ssize_t maxno)
 	return (buf);
 }
 
-void	set_column_infodata(void)
+int		set_column_infodata(void)
 {
 	int		i;
 	int		info;
 	int		curmax;
 	int		min_width;
 
-	curmax = (maxinfo / termsize.col) - (winhelp * MIN_ROW_WINHELP);
+	curmax = termsize.row - (winhelp * MIN_ROW_WINHELP);
 	i = 0;
 	min_width = 0;
 	info = 0;
@@ -216,7 +216,7 @@ void	set_column_infodata(void)
 			column[ncolumn].info[info++] = datainfo + i;
 			if (min_width < datainfo[i].len)
 				min_width = datainfo[i].len;
-			if (info == curmax)
+			if (info >= curmax)
 			{
 				column[ncolumn].info_size = info;
 				column[ncolumn++].min_width = min_width;
@@ -226,12 +226,13 @@ void	set_column_infodata(void)
 		}
 		i++;
  	}
-	if (info != curmax)
+	if (info < curmax)
 	{
 		column[ncolumn].info_size = info;
 		column[ncolumn].min_width = min_width;
 		ncolumn += 1;
 	}
+	return (curmax);
 }
 
 int		init_column(void)
@@ -268,7 +269,13 @@ void	output(t_datainfo *info)
 		dprintf(2, "%s", caps[MR]);
 	if (state & SL_CURSOR)
 		dprintf(2, "%s", caps[US]);
-	dprintf(2, "%s%s", info->s, caps[ME]);
+	if (termsize.col < info->len)
+		dprintf(2, "%.*s%.*s%s",
+				(termsize.col > 3) * (termsize.col - 3), info->s,
+				termsize.col < 3 ? termsize.col % 3 : 3, "...",
+				caps[ME]);
+	else
+		dprintf(2, "%s%s", info->s, caps[ME]);
 }
 
 int		can_set_winhelp(void)
@@ -286,10 +293,11 @@ void	select_output(t_column *col)
 	i = 0;
 	row = winhelp * MIN_ROW_WINHELP;
 	TSETCURSOR(row, 0);
+	dprintf(1, "%s", caps[CD]);
 	while (i < max)
 	{
+		TSETCURSOR(row + i, 0);
 		output(col->info[i++]);
-		dprintf(2, "\n");
 	}
 }
 
@@ -303,7 +311,6 @@ void	select_refresh(t_datainfo *info, int options, int state)
 
 void	key_event(uint64_t k)
 {
-	dprintf(3, "%lx %lx %lx\n", k, KEY_BACKSPACE, KEY_ENTER);
 	if (k == KEY_BACKSPACE)
 		delete_current();
 	else if (k == KEY_ARROW_UP)
@@ -329,22 +336,20 @@ int		main(int ac, char **av)
 	ft_qsort((void **)(av + 1), ac - 1, strcmp);
 	if (init_non_canon())
 		return (1);
-	if (ac == 1 || init_select_mode() || init_datainfo(ac, av) || init_column())
+	if (init_select_mode() || init_datainfo(ac, av) || init_column())
 	{
 		tcsetattr(STDIN_FILENO, TCSANOW, &g_otermios);
 		return (1);
 	}
-	dprintf(2, "%s", caps[TI]);
-	column[0].info[0]->state |= SL_CURSOR;
-	select_output(column + cur_col);
-	dprintf(2, "%s", caps[VI]);
+	start_select_mode();
+	signal_handle();
 	while (eleminfo)
 	{
 		k = 0;
 		read(STDIN_FILENO, &k, sizeof(k));
 		key_event(k);
 	}
-	dprintf(2, "%s", caps[VS]);
-	restore_terminal();
+	end_select_mode();
+	print_selected();
 	return (0);
 }

@@ -6,7 +6,7 @@
 /*   By: jye <jye@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/10/23 16:22:10 by jye               #+#    #+#             */
-/*   Updated: 2017/11/16 11:44:45 by jye              ###   ########.fr       */
+/*   Updated: 2017/11/17 11:26:48 by root             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -103,10 +103,16 @@ void	select_move_left(void);
 void	select_move_down(void);
 void	select_current(void);
 void	delete_current(void);
+void	print_selected(void);
 void	done(void);
 
+int		update_termsize(void);
+void	start_select_mode(void);
+int		end_select_mode(void);
+void	signal_handle(void);
+
 void	select_refresh(t_datainfo *info, int options, int state);
-void	set_column_infodata(void);
+int		set_column_infodata(void);
 void	select_output(t_column *col);
 
 #endif
