@@ -6,7 +6,7 @@
 /*   By: jye <jye@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/11/18 00:48:09 by jye               #+#    #+#             */
-/*   Updated: 2017/11/18 01:49:56 by jye              ###   ########.fr       */
+/*   Updated: 2017/11/18 02:42:13 by jye              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,4 +71,10 @@ void	print_selected(void)
 		i++;
 	}
 	ft_dprintf(1, "\n");
+}
+
+void	select_quit(void)
+{
+	end_select_mode();
+	exit(0);
 }

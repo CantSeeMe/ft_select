@@ -6,7 +6,7 @@
 /*   By: jye <jye@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/11/18 00:45:58 by jye               #+#    #+#             */
-/*   Updated: 2017/11/18 01:48:46 by jye              ###   ########.fr       */
+/*   Updated: 2017/11/18 03:47:56 by jye              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,9 +26,11 @@ void	select_suspend(int sig)
 
 void	select_restart(int sig)
 {
-	struct sigaction act;
+	struct sigaction 	act;
 
 	(void)sig;
+	if (init_non_canon())
+		exit(EXIT_FAILURE);
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = SA_RESTART | SA_RESETHAND;
 	act.sa_handler = select_suspend;

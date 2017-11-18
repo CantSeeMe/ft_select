@@ -6,7 +6,7 @@
 /*   By: jye <jye@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/10/23 16:22:10 by jye               #+#    #+#             */
-/*   Updated: 2017/11/18 01:47:40 by jye              ###   ########.fr       */
+/*   Updated: 2017/11/18 02:42:36 by jye              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,7 @@
 # define KEY_SPACEBAR		0x20L
 # define KEY_BACKSPACE		0x7fL
 # define KEY_ENTER			0x0aL
+# define KEY_ESC			0x1bL
 # define KEY_DELETE			0x7e335b1bL
 
 # define SL_ADD			00
@@ -118,6 +119,7 @@ void					select_move_right(void);
 void					select_move_left(void);
 void					select_move_down(void);
 void					select_current(void);
+void					select_quit(void);
 void					delete_current(void);
 void					print_selected(void);
 void					done(void);

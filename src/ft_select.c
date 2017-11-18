@@ -6,7 +6,7 @@
 /*   By: jye <jye@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/10/23 16:22:29 by jye               #+#    #+#             */
-/*   Updated: 2017/11/18 01:47:58 by jye              ###   ########.fr       */
+/*   Updated: 2017/11/18 02:37:38 by jye              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,7 +64,7 @@ void	select_refresh(t_datainfo *info, int options, int state)
 
 void	key_event(uint64_t k)
 {
-	if (k == KEY_BACKSPACE)
+	if (k == KEY_BACKSPACE || k == KEY_DELETE)
 		delete_current();
 	else if (k == KEY_ARROW_UP)
 		select_move_up();
@@ -78,8 +78,8 @@ void	key_event(uint64_t k)
 		select_current();
 	else if (k == KEY_ENTER)
 		done();
-	else if (k == KEY_DELETE)
-		delete_current();
+	else if (k == 'q' || k == KEY_ESC)
+		select_quit();
 }
 
 int		main(int ac, char **av)
