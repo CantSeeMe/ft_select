@@ -6,7 +6,7 @@
 /*   By: jye <jye@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/11/18 00:48:09 by jye               #+#    #+#             */
-/*   Updated: 2017/11/18 01:31:28 by jye              ###   ########.fr       */
+/*   Updated: 2017/11/18 01:49:56 by jye              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,12 +21,14 @@ void	select_current(void)
 	if (g_column[g_cur_col].info[g_cur_row]->state & SL_SELECTED)
 	{
 		g_selected--;
-		select_refresh(g_column[g_cur_col].info[g_cur_row], SL_REMOVE, SL_SELECTED);
+		select_refresh(g_column[g_cur_col].info[g_cur_row],
+				SL_REMOVE, SL_SELECTED);
 	}
 	else
 	{
 		g_selected++;
-		select_refresh(g_column[g_cur_col].info[g_cur_row], SL_ADD, SL_SELECTED);
+		select_refresh(g_column[g_cur_col].info[g_cur_row],
+				SL_ADD, SL_SELECTED);
 	}
 	select_move_down();
 }
@@ -35,7 +37,7 @@ void	delete_current(void)
 {
 	int		infosize;
 
-	TSETCURSOR(0 + (MIN_ROW_WINHELP * g_winhelp), 0);
+	TSETC(0 + (MIN_ROW_WINHELP * g_winhelp), 0);
 	ft_dprintf(2, "%s", g_caps[CD]);
 	g_column[g_cur_col].info[g_cur_row]->state &= ~(SL_ALIVE | SL_SELECTED);
 	g_eleminfo--;
@@ -45,7 +47,7 @@ void	delete_current(void)
 	g_column[g_cur_col].info[g_cur_row]->state |= SL_CURSOR;
 	update_page();
 	select_output(g_column + g_cur_col);
-	TSETCURSOR(g_cur_row + (MIN_ROW_WINHELP * g_winhelp), 0);
+	TSETC(g_cur_row + (MIN_ROW_WINHELP * g_winhelp), 0);
 }
 
 void	done(void)

@@ -6,7 +6,7 @@
 /*   By: jye <jye@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/10/23 16:22:29 by jye               #+#    #+#             */
-/*   Updated: 2017/11/18 01:42:35 by jye              ###   ########.fr       */
+/*   Updated: 2017/11/18 01:47:58 by jye              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,11 +44,11 @@ void	select_output(t_column *col)
 	max = col->info_size;
 	i = 0;
 	row = g_winhelp * MIN_ROW_WINHELP;
-	TSETCURSOR(row, 0);
+	TSETC(row, 0);
 	ft_dprintf(1, "%s", g_caps[CD]);
 	while (i < max)
 	{
-		TSETCURSOR(row + i, 0);
+		TSETC(row + i, 0);
 		output(col->info[i++]);
 	}
 }
@@ -58,7 +58,7 @@ void	select_refresh(t_datainfo *info, int options, int state)
 	ft_dprintf(3, "%p\n", info);
 	state = options ? ~state & info->state : state | info->state;
 	info->state = state;
-	TSETCURSOR(g_cur_row + (MIN_ROW_WINHELP * g_winhelp), 0);
+	TSETC(g_cur_row + (MIN_ROW_WINHELP * g_winhelp), 0);
 	output(info);
 }
 

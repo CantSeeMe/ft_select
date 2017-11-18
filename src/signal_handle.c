@@ -6,7 +6,7 @@
 /*   By: jye <jye@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/11/18 00:45:58 by jye               #+#    #+#             */
-/*   Updated: 2017/11/18 01:33:25 by jye              ###   ########.fr       */
+/*   Updated: 2017/11/18 01:48:46 by jye              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,7 +47,7 @@ void	select_winch(int sig)
 	sigaddset(&set, SIGWINCH);
 	sigprocmask(SIG_BLOCK, &set, NULL);
 	update_termsize();
-	TSETCURSOR(0, 0);
+	TSETC(0, 0);
 	ft_dprintf(2, "%s", g_caps[CD]);
 	current = g_column[g_cur_col].info[g_cur_row];
 	curmax = set_column_infodata();

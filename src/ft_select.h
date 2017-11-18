@@ -6,7 +6,7 @@
 /*   By: jye <jye@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/10/23 16:22:10 by jye               #+#    #+#             */
-/*   Updated: 2017/11/18 01:20:25 by jye              ###   ########.fr       */
+/*   Updated: 2017/11/18 01:47:40 by jye              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,7 +75,7 @@
 
 # define NONE	""
 
-# define TSETCURSOR(row, col) ft_dprintf(2, "%s", tgoto(g_caps[CM], (col), (row)))
+# define TSETC(row, col) ft_dprintf(2, "%s", tgoto(g_caps[CM], (col), (row)))
 
 typedef struct			s_datainfo
 {
