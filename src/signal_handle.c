@@ -6,7 +6,7 @@
 /*   By: jye <jye@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/11/18 00:45:58 by jye               #+#    #+#             */
-/*   Updated: 2017/11/18 03:47:56 by jye              ###   ########.fr       */
+/*   Updated: 2017/11/18 05:36:40 by jye              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,9 @@ void	select_restart(int sig)
 	act.sa_flags = SA_RESTART | SA_RESETHAND;
 	act.sa_handler = select_suspend;
 	sigaction(SIGTSTP, &act, NULL);
-	start_select_mode(0);
+	ft_dprintf(2, "%s", g_caps[TI]);
+	ft_dprintf(2, "%s", g_caps[VI]);
+	start_select_mode(1);
 }
 
 void	select_winch(int sig)

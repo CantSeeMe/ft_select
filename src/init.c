@@ -6,7 +6,7 @@
 /*   By: jye <jye@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/11/18 00:51:02 by jye               #+#    #+#             */
-/*   Updated: 2017/11/18 01:30:10 by jye              ###   ########.fr       */
+/*   Updated: 2017/11/22 07:21:23 by jye              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,7 +75,7 @@ int			set_column_infodata(void)
 		}
 		i++;
 	}
-	if (info < curmax)
+	if (info % curmax)
 		g_column[g_ncolumn++].info_size = info;
 	return (curmax);
 }

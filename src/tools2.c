@@ -6,7 +6,7 @@
 /*   By: jye <jye@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/11/18 00:33:46 by jye               #+#    #+#             */
-/*   Updated: 2017/11/18 03:49:22 by jye              ###   ########.fr       */
+/*   Updated: 2017/11/18 05:35:42 by jye              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,6 @@ int		end_select_mode(void)
 
 void	start_select_mode(int reset)
 {
-	ft_dprintf(2, "%s", g_caps[TI]);
 	update_termsize();
 	set_help_windows();
 	if (reset)
@@ -34,7 +33,6 @@ void	start_select_mode(int reset)
 	update_page();
 	g_column[g_cur_col].info[g_cur_row]->state |= SL_CURSOR;
 	select_output(g_column + g_cur_col);
-	ft_dprintf(2, "%s", g_caps[VI]);
 }
 
 void	update_page(void)

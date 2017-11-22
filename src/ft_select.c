@@ -6,7 +6,7 @@
 /*   By: jye <jye@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/10/23 16:22:29 by jye               #+#    #+#             */
-/*   Updated: 2017/11/18 02:37:38 by jye              ###   ########.fr       */
+/*   Updated: 2017/11/22 06:57:35 by jye              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,6 @@ void	select_output(t_column *col)
 
 void	select_refresh(t_datainfo *info, int options, int state)
 {
-	ft_dprintf(3, "%p\n", info);
 	state = options ? ~state & info->state : state | info->state;
 	info->state = state;
 	TSETC(g_cur_row + (MIN_ROW_WINHELP * g_winhelp), 0);
@@ -94,6 +93,8 @@ int		main(int ac, char **av)
 		tcsetattr(STDIN_FILENO, TCSANOW, &g_otermios);
 		return (1);
 	}
+	ft_dprintf(2, "%s", g_caps[TI]);
+	ft_dprintf(2, "%s", g_caps[VI]);
 	start_select_mode(1);
 	signal_handle();
 	while (g_eleminfo)
