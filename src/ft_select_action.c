@@ -6,7 +6,7 @@
 /*   By: jye <jye@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/11/18 00:48:09 by jye               #+#    #+#             */
-/*   Updated: 2017/11/22 06:57:11 by jye              ###   ########.fr       */
+/*   Updated: 2017/11/25 00:43:32 by jye              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,9 +42,12 @@ void	delete_current(void)
 	g_column[g_cur_col].info[g_cur_row]->state &= ~(SL_ALIVE | SL_SELECTED);
 	g_eleminfo--;
 	set_column_infodata();
-	g_cur_col -= g_cur_col >= g_ncolumn;
+	if (g_eleminfo == 0)
+		return ;
 	infosize = g_column[g_cur_col].info_size;
-	g_cur_row += (g_cur_row >= infosize) * (infosize - g_cur_row - 1);
+	ft_dprintf(3, "%d\n", g_ncolumn);
+	if (g_cur_row >= infosize)
+		select_move_up();
 	g_column[g_cur_col].info[g_cur_row]->state |= SL_CURSOR;
 	update_page();
 	select_output(g_column + g_cur_col);

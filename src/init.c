@@ -6,7 +6,7 @@
 /*   By: jye <jye@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/11/18 00:51:02 by jye               #+#    #+#             */
-/*   Updated: 2017/11/22 07:21:23 by jye              ###   ########.fr       */
+/*   Updated: 2017/11/23 18:27:27 by jye              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,6 +77,7 @@ int			set_column_infodata(void)
 	}
 	if (info % curmax)
 		g_column[g_ncolumn++].info_size = info;
+	g_column[g_ncolumn].info_size = 0;
 	return (curmax);
 }
 
@@ -85,9 +86,10 @@ int			init_column(void)
 	int		i;
 	int		maxno;
 
-	if ((g_column = (t_column *)malloc(sizeof(*g_column) * g_maxinfo)) == 0)
+	if ((g_column = (t_column *)malloc(sizeof(*g_column) * (g_maxinfo + 1))) == 0)
 		return (1);
 	i = 0;
+	g_column[g_maxinfo].info_size = 0;
 	while (i < g_maxinfo)
 	{
 		maxno = (g_maxinfo / (i + 1));

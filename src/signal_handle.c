@@ -6,7 +6,7 @@
 /*   By: jye <jye@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/11/18 00:45:58 by jye               #+#    #+#             */
-/*   Updated: 2017/11/18 05:36:40 by jye              ###   ########.fr       */
+/*   Updated: 2017/11/25 00:54:23 by jye              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,9 +42,9 @@ void	select_restart(int sig)
 
 void	select_winch(int sig)
 {
-	t_datainfo	*current;
-	int			curmax;
 	sigset_t	set;
+	int			current;
+	int			curmax;
 
 	(void)sig;
 	sigemptyset(&set);
@@ -53,10 +53,10 @@ void	select_winch(int sig)
 	update_termsize();
 	TSETC(0, 0);
 	ft_dprintf(2, "%s", g_caps[CD]);
-	current = g_column[g_cur_col].info[g_cur_row];
+	current = (g_column[0].info_size * g_cur_col) + g_cur_row;
 	curmax = set_column_infodata();
-	g_cur_col = (current - g_datainfo) / curmax;
-	g_cur_row = (current - g_datainfo) % curmax;
+	g_cur_col = current / curmax;
+	g_cur_row = current % curmax;
 	start_select_mode(1);
 	select_output(g_column + g_cur_col);
 	sigprocmask(SIG_UNBLOCK, &set, NULL);
