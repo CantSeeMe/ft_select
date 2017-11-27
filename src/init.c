@@ -6,7 +6,7 @@
 /*   By: jye <jye@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/11/18 00:51:02 by jye               #+#    #+#             */
-/*   Updated: 2017/11/23 18:27:27 by jye              ###   ########.fr       */
+/*   Updated: 2017/11/27 05:21:04 by jye              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,7 +86,8 @@ int			init_column(void)
 	int		i;
 	int		maxno;
 
-	if ((g_column = (t_column *)malloc(sizeof(*g_column) * (g_maxinfo + 1))) == 0)
+	g_column = (t_column *)malloc(sizeof(*g_column) * (g_maxinfo + 1));
+	if (g_column == (t_column *)0)
 		return (1);
 	i = 0;
 	g_column[g_maxinfo].info_size = 0;

@@ -6,7 +6,7 @@
 /*   By: jye <jye@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/11/18 00:45:58 by jye               #+#    #+#             */
-/*   Updated: 2017/11/25 00:54:23 by jye              ###   ########.fr       */
+/*   Updated: 2017/11/27 05:20:33 by jye              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@ void	select_suspend(int sig)
 
 void	select_restart(int sig)
 {
-	struct sigaction 	act;
+	struct sigaction	act;
 
 	(void)sig;
 	if (init_non_canon())

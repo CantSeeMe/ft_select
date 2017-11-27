@@ -6,7 +6,7 @@
 /*   By: jye <jye@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/10/23 16:22:29 by jye               #+#    #+#             */
-/*   Updated: 2017/11/22 06:57:35 by jye              ###   ########.fr       */
+/*   Updated: 2017/11/27 05:20:16 by jye              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,7 +45,7 @@ void	select_output(t_column *col)
 	i = 0;
 	row = g_winhelp * MIN_ROW_WINHELP;
 	TSETC(row, 0);
-	ft_dprintf(1, "%s", g_caps[CD]);
+	ft_dprintf(2, "%s", g_caps[CD]);
 	while (i < max)
 	{
 		TSETC(row + i, 0);
